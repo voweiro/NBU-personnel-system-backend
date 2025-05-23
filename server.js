@@ -18,9 +18,10 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 // Configure CORS for cross-domain requests
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*', // Allow requests from any origin if FRONTEND_URL is not set
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000', // Allow requests from frontend origin
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true // Allow credentials (cookies, authorization headers, etc.)
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
