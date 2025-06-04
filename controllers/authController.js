@@ -7,21 +7,21 @@ const login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // Check if user exists in the database
-    const userResult = await db.query(
+    // Query the user from the personnel_users table
+    const result = await db.query(
       'SELECT * FROM "personnel_users" WHERE "email" = $1',
       [email]
     );
 
-    if (userResult.rows.length === 0) {
+    // Check if user exists
+    if (result.rows.length === 0) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    const user = userResult.rows[0];
+    const user = result.rows[0];
 
-    // Compare the provided password with the stored hashed password
-    const isPasswordValid = await bcrypt.compare(password, user.Password);
-
+    // Compare provided password with stored hashed password
+    const isPasswordValid = await bcrypt.compare(password, user.password || '');
     if (!isPasswordValid) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
@@ -37,7 +37,7 @@ const login = async (req, res) => {
     return res.status(200).json({
       message: 'Login successful',
       user: {
-        id: user.id,
+        id: user.UserID,
         email: user.email,
         role: user.role,
       },
