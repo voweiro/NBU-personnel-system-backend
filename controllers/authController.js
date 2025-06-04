@@ -9,7 +9,7 @@ const login = async (req, res) => {
   try {
     // Check if user exists in the database
     const userResult = await db.query(
-      'SELECT * FROM "Users" WHERE "email" = $1',
+      'SELECT * FROM "personnel_users" WHERE "email" = $1',
       [email]
     );
 
@@ -28,7 +28,7 @@ const login = async (req, res) => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { id: user.UserID, email: user.Email, role: user.Role },
+      { id: user.UserID, email: user.email, role: user.role },
       process.env.JWT_SECRET || 'nbu_secret_key',
       { expiresIn: '1h' }
     );
@@ -37,9 +37,9 @@ const login = async (req, res) => {
     return res.status(200).json({
       message: 'Login successful',
       user: {
-        id: user.UserID,
-        email: user.Email,
-        role: user.Role,
+        id: user.id,
+        email: user.email,
+        role: user.role,
       },
       token,
     });
