@@ -9,7 +9,7 @@ const login = async (req, res) => {
   try {
     // Check if user exists in the database
     const userResult = await db.query(
-      'SELECT * FROM "Users" WHERE "Email" = $1',
+      'SELECT * FROM "Users" WHERE "email" = $1',
       [email]
     );
 
