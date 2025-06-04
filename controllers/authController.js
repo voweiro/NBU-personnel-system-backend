@@ -28,7 +28,7 @@ const login = async (req, res) => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { id: user.UserID, email: user.email, role: user.role },
+      { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET || 'nbu_secret_key',
       { expiresIn: '1h' }
     );
@@ -37,7 +37,7 @@ const login = async (req, res) => {
     return res.status(200).json({
       message: 'Login successful',
       user: {
-        id: user.UserID,
+        id: user.id,
         email: user.email,
         role: user.role,
       },
