@@ -69,35 +69,49 @@ const getUsers = async (req, res) => {
 
 // Create new user
 const createUser = async (req, res) => {
-  const { email, password, full_name, role } = req.body;
-
   try {
-    // Check if user already exists
+    const { full_name, email, password, role } = req.body;
+    
+    // Get the current user's role from the token
+    const currentUser = req.user;
+
+    // Only superadmin can create users
+    if (currentUser.role !== 'superadmin') {
+      return res.status(403).json({ message: 'Only superadmin can create users' });
+    }
+
+    // Validate role
+    const validRoles = ['superadmin', 'admin', 'user'];
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({ message: 'Invalid role specified' });
+    }
+
+    // Check if email already exists
     const existingUser = await db.query(
       'SELECT * FROM "personnel_users" WHERE email = $1',
       [email]
     );
 
     if (existingUser.rows.length > 0) {
-      return res.status(400).json({ message: 'User with this email already exists' });
+      return res.status(400).json({ message: 'Email already exists' });
     }
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insert new user
+    // Create new user
     const result = await db.query(
-      'INSERT INTO "personnel_users" (email, password, full_name, role) VALUES ($1, $2, $3, $4) RETURNING id, email, full_name, role, created_at',
-      [email, hashedPassword, full_name, role]
+      'INSERT INTO "personnel_users" (full_name, email, password, role) VALUES ($1, $2, $3, $4) RETURNING id, full_name, email, role',
+      [full_name, email, hashedPassword, role]
     );
 
-    return res.status(201).json({
-      success: true,
-      data: result.rows[0]
+    res.status(201).json({
+      message: 'User created successfully',
+      user: result.rows[0]
     });
   } catch (error) {
     console.error('Error creating user:', error);
-    return res.status(500).json({ message: 'Server error while creating user' });
+    res.status(500).json({ message: 'Error creating user' });
   }
 };
 
