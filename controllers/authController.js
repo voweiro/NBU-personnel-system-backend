@@ -168,10 +168,47 @@ const changePassword = async (req, res) => {
   }
 };
 
+// Delete user
+const deleteUser = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Check if user exists
+    const existingUser = await db.query(
+      'SELECT * FROM "personnel_users" WHERE id = $1',
+      [id]
+    );
+
+    if (existingUser.rows.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Check if trying to delete a superadmin
+    if (existingUser.rows[0].role === 'superadmin') {
+      return res.status(403).json({ message: 'Cannot delete superadmin user' });
+    }
+
+    // Delete user
+    await db.query(
+      'DELETE FROM "personnel_users" WHERE id = $1',
+      [id]
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'User deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    return res.status(500).json({ message: 'Server error while deleting user' });
+  }
+};
+
 module.exports = {
   login,
   getUsers,
   createUser,
   updateUser,
-  changePassword
+  changePassword,
+  deleteUser
 };

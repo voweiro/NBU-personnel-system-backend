@@ -11,5 +11,6 @@ router.get('/users', authenticateToken, isSuperAdmin, authController.getUsers);
 router.post('/users', authenticateToken, isSuperAdmin, authController.createUser);
 router.put('/users/:id', authenticateToken, isSuperAdmin, authController.updateUser);
 router.put('/users/:id/password', authenticateToken, isSuperAdmin, authController.changePassword);
+router.delete('/users/:id', authenticateToken, isSuperAdmin, authController.deleteUser);
 
 module.exports = router;
