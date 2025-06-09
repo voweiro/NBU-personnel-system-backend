@@ -7,6 +7,7 @@ const facultyRoutes = require('./routes/faculty');
 const positionRoutes = require('./routes/position');
 const rankRoutes = require('./routes/rank');
 const staffIdRoutes = require('./routes/staffId');
+const activityLogRoutes = require('./routes/activityLogs');
 
 // Load environment variables
 dotenv.config();
@@ -33,6 +34,7 @@ app.use('/api/faculty', facultyRoutes);
 app.use('/api/position', positionRoutes);
 app.use('/api/rank', rankRoutes);
 app.use('/api/staffId', staffIdRoutes);
+app.use('/api/activity-logs', activityLogRoutes);
 
 // Root route
 app.get('/', (req, res) => {
