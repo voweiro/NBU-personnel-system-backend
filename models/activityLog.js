@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
+const User = require('./user');
 
 const ActivityLog = sequelize.define('ActivityLog', {
   id: {
@@ -11,7 +12,7 @@ const ActivityLog = sequelize.define('ActivityLog', {
     type: DataTypes.INTEGER,
     allowNull: true,
     references: {
-      model: 'Users',
+      model: 'personnel_users',
       key: 'id'
     }
   },
@@ -28,13 +29,19 @@ const ActivityLog = sequelize.define('ActivityLog', {
     allowNull: true
   },
   userAgent: {
-    type: DataTypes.STRING,
+    type: DataTypes.TEXT,
     allowNull: true
-  },
-  createdAt: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW
   }
+}, {
+  tableName: 'activity_logs',
+  timestamps: true,
+  underscored: true
+});
+
+// Define the association
+ActivityLog.belongsTo(User, {
+  foreignKey: 'userId',
+  as: 'user'
 });
 
 module.exports = ActivityLog; 
