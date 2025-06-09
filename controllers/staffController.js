@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { logActivity } = require('./activityLogController');
 
 // Get all staff
 const getAllStaff = async (req, res) => {
@@ -6,6 +7,8 @@ const getAllStaff = async (req, res) => {
     const result = await db.query(
       'SELECT s.*, f."Faculty" FROM "Staff" s LEFT JOIN "Faculty" f ON s."FacultyID" = f."FacultyID" ORDER BY s."FullName"'
     );
+    
+    await logActivity(req.user.id, 'VIEW_STAFF_LIST', 'Viewed staff list', req);
     
     return res.status(200).json({
       success: true,
@@ -37,6 +40,13 @@ const getStaffById = async (req, res) => {
         message: 'Staff not found'
       });
     }
+
+    await logActivity(
+      req.user.id,
+      'VIEW_STAFF_DETAILS',
+      `Viewed details of staff member: ${result.rows[0].FullName} (${id})`,
+      req
+    );
     
     return res.status(200).json({
       success: true,
@@ -93,6 +103,13 @@ const createStaff = async (req, res) => {
     const result = await db.query(
       'INSERT INTO "Staff" ("Rank", "StaffID", "FullName", "Email", "Category", "FacultyID", "Status", "Nationality", "StateOfOrigin", "LGA", "DateOfBirth", "DateOfEmployment", "Address", "Phone", "Position") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *',
       [Rank, StaffID, FullName, Email, Category, FacultyID, Status, Nationality, StateOfOrigin, LGA, parsedDateOfBirth, parsedDateOfEmployment, Address, Phone, Position]
+    );
+
+    await logActivity(
+      req.user.id,
+      'CREATE_STAFF',
+      `Created new staff member: ${FullName} (${StaffID})`,
+      req
     );
     
     return res.status(201).json({
@@ -154,6 +171,13 @@ const updateStaff = async (req, res) => {
       'UPDATE "Staff" SET "Rank" = $1, "FullName" = $2, "Email" = $3, "Category" = $4, "FacultyID" = $5, "Status" = $6, "Nationality" = $7, "StateOfOrigin" = $8, "LGA" = $9, "DateOfBirth" = $10, "DateOfEmployment" = $11, "Address" = $12, "Phone" = $13, "Position" = $14 WHERE "StaffID" = $15 RETURNING *',
       [Rank, FullName, Email, Category, FacultyID, Status, Nationality, StateOfOrigin, LGA, parsedDateOfBirth, parsedDateOfEmployment, Address, Phone, Position, id]
     );
+
+    await logActivity(
+      req.user.id,
+      'UPDATE_STAFF',
+      `Updated staff member: ${FullName} (${id})`,
+      req
+    );
     
     return res.status(200).json({
       success: true,
@@ -188,11 +212,20 @@ const deleteStaff = async (req, res) => {
         message: 'Staff not found'
       });
     }
+
+    const staffName = existingStaff.rows[0].FullName;
     
     // Delete staff
     await db.query(
       'DELETE FROM "Staff" WHERE "StaffID" = $1',
       [id]
+    );
+
+    await logActivity(
+      req.user.id,
+      'DELETE_STAFF',
+      `Deleted staff member: ${staffName} (${id})`,
+      req
     );
     
     return res.status(200).json({

@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { logActivity } = require('./activityLogController');
 
 // Get all faculties
 const getAllFaculties = async (req, res) => {
@@ -6,6 +7,8 @@ const getAllFaculties = async (req, res) => {
     const result = await db.query(
       'SELECT * FROM "Faculty" ORDER BY "Faculty"'
     );
+    
+    await logActivity(req.user.id, 'VIEW_FACULTIES', 'Viewed faculty list', req);
     
     return res.status(200).json({
       success: true,
@@ -38,6 +41,13 @@ const getFacultyById = async (req, res) => {
       });
     }
     
+    await logActivity(
+      req.user.id,
+      'VIEW_FACULTY',
+      `Viewed faculty details: ${result.rows[0].Faculty}`,
+      req
+    );
+    
     return res.status(200).json({
       success: true,
       data: result.rows[0]
@@ -58,14 +68,14 @@ const createFaculty = async (req, res) => {
     
     // Check if faculty already exists
     const existingFaculty = await db.query(
-      'SELECT * FROM "Faculty" WHERE "Faculty" = $1',
+      'SELECT * FROM "Faculty" WHERE LOWER("Faculty") = LOWER($1)',
       [Faculty]
     );
     
     if (existingFaculty.rows.length > 0) {
       return res.status(400).json({
         success: false,
-        message: 'Faculty with this name already exists'
+        message: 'Faculty already exists'
       });
     }
     
@@ -73,6 +83,13 @@ const createFaculty = async (req, res) => {
     const result = await db.query(
       'INSERT INTO "Faculty" ("Faculty") VALUES ($1) RETURNING *',
       [Faculty]
+    );
+
+    await logActivity(
+      req.user.id,
+      'CREATE_FACULTY',
+      `Created new faculty: ${Faculty}`,
+      req
     );
     
     return res.status(201).json({
@@ -107,10 +124,30 @@ const updateFaculty = async (req, res) => {
       });
     }
     
+    // Check if new name already exists for different faculty
+    const duplicateFaculty = await db.query(
+      'SELECT * FROM "Faculty" WHERE LOWER("Faculty") = LOWER($1) AND "FacultyID" != $2',
+      [Faculty, id]
+    );
+    
+    if (duplicateFaculty.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Faculty name already exists'
+      });
+    }
+    
     // Update faculty
     const result = await db.query(
       'UPDATE "Faculty" SET "Faculty" = $1 WHERE "FacultyID" = $2 RETURNING *',
       [Faculty, id]
+    );
+
+    await logActivity(
+      req.user.id,
+      'UPDATE_FACULTY',
+      `Updated faculty from "${existingFaculty.rows[0].Faculty}" to "${Faculty}"`,
+      req
     );
     
     return res.status(200).json({
@@ -161,6 +198,13 @@ const deleteFaculty = async (req, res) => {
     await db.query(
       'DELETE FROM "Faculty" WHERE "FacultyID" = $1',
       [id]
+    );
+
+    await logActivity(
+      req.user.id,
+      'DELETE_FACULTY',
+      `Deleted faculty: ${existingFaculty.rows[0].Faculty}`,
+      req
     );
     
     return res.status(200).json({

@@ -59,6 +59,8 @@ const getUsers = async (req, res) => {
     const result = await db.query(
       'SELECT id, email, full_name, role, created_at FROM "personnel_users" ORDER BY created_at DESC'
     );
+
+    await logActivity(req.user.id, 'VIEW_USERS', 'Viewed user list', req);
     
     return res.status(200).json({
       success: true,
@@ -118,10 +120,18 @@ const updateUser = async (req, res) => {
       });
     }
 
+    const oldEmail = user.email;
+    const oldRole = user.role;
+
     await user.update({ email, role, full_name });
 
-    // Log user update
-    await logActivity(req.user.id, 'UPDATE_USER', `Updated user ${id}: ${email}`, req);
+    // Log user update with changes
+    await logActivity(
+      req.user.id,
+      'UPDATE_USER',
+      `Updated user ${id}: ${oldEmail} -> ${email}, role: ${oldRole} -> ${role}`,
+      req
+    );
 
     res.json({
       success: true,
@@ -166,6 +176,14 @@ const changePassword = async (req, res) => {
       [hashedPassword, id]
     );
 
+    // Log password change
+    await logActivity(
+      req.user.id,
+      'CHANGE_PASSWORD',
+      `Changed password for user: ${existingUser.rows[0].email}`,
+      req
+    );
+
     return res.status(200).json({
       success: true,
       message: 'Password updated successfully'
@@ -196,10 +214,18 @@ const deleteUser = async (req, res) => {
       });
     }
 
+    const userEmail = user.email;
+    const userRole = user.role;
+
     await user.destroy();
 
     // Log user deletion
-    await logActivity(req.user.id, 'DELETE_USER', `Deleted user ${id}`, req);
+    await logActivity(
+      req.user.id,
+      'DELETE_USER',
+      `Deleted user: ${userEmail} (${userRole})`,
+      req
+    );
 
     res.json({
       success: true,
