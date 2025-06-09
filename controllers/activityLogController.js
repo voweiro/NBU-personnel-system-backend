@@ -22,6 +22,7 @@ const getActivityLogs = async (req, res) => {
     const logs = await ActivityLog.findAll({
       include: [{
         model: User,
+        as: 'user',
         attributes: ['email', 'full_name', 'role']
       }],
       order: [['createdAt', 'DESC']],
